@@ -1,0 +1,5 @@
+dist
+nbmc.egg-info
+*.il
+*.sby
+out
