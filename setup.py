@@ -10,7 +10,7 @@ README = (HERE / "README.md").read_text()
 # This call to setup() does all the work
 setup(
     name="nbmc",
-    version="0.0.0",
+    version="0.0.1",
     description="Executes Yosys BMC and renders counterexample as SVG",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -28,7 +28,7 @@ setup(
     install_requires=[
         "yowasp-yosys",
         "wavedrom",
-        "z3",
+        "z3-solver",
         "pyDigitalWaveTools",
         "parse"
     ]
