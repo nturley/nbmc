@@ -16,6 +16,7 @@ from tempfile import TemporaryDirectory
 import pathlib
 from dataclasses import dataclass
 
+
 def _find_gcd(list):
     x = reduce(gcd, list)
     return x
@@ -63,7 +64,7 @@ def _create_wsig(sig, timestep, tmax, ancestry):
             data.append(value)
         last_val = value
         curr_step += timestep
-    while tmax > curr_step:
+    while tmax >= curr_step:
         wave_str += '.'
         curr_step += timestep
     return {'wave': wave_str, 'name': sig['name'], 'data': data}
