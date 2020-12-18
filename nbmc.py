@@ -1,6 +1,6 @@
 import wavedrom
 from pyDigitalWaveTools.vcd.parser import VcdParser
-from parse import parse
+from parse import parse, findall, search
 from nmigen.back import rtlil
 from nmigen import *
 from nmigen.asserts import Assert, Assume, Cover, Past
@@ -109,7 +109,18 @@ class Result(Enum):
 class BMC_Result:
     result: Result
     stdout: str
-    drawing: svgwrite.drawing.Drawing
+    waveform: svgwrite.drawing.Drawing = None
+    fail_step: int = -1
+    line_num: int = -1
+
+def _get_failure_info(stdout, vcd_path):
+    waveform = _render_vcd(vcd_path)
+    search_format = 'Assert failed in top: {}:{linenumber:d}'
+    line_num = search(search_format, stdout)['linenumber']
+    step_format = 'Checking assertions in step {step_num:d}..'
+    steps = findall(step_format, stdout)
+    step_num = list(steps)[-1]['step_num']
+    return BMC_Result(Result.FAIL, stdout, waveform, step_num, line_num)
 
 def check(nmigen_module, ports):
     with TemporaryDirectory() as tmpdirname:
@@ -140,8 +151,10 @@ prep -top top
             '--yosys', yosys_path,
             '--smtbmc', smt_path,
             temp_path/'out.sby'], stdout=subprocess.PIPE)
-        if process.returncode in [0, 2]:
-            result = Result(process.returncode)
-            return BMC_Result(result, process.stdout, None if result == Result.PASS else _render_vcd(temp_path / 'work/engine_0/trace.vcd'))
+        stdout = str(process.stdout)
+        if process.returncode == 0:
+            return BMC_Result(Result.PASS, stdout)
+        if process.returncode == 1:
+            return _get_failure_info(stdout, temp_path / 'work/engine_0/trace.vcd')
         else:
-            return BMC_Result(Result.ERROR, process.stdout, None)
+            return BMC_Result(Result.ERROR, stdout)
